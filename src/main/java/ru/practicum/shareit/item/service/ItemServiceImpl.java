@@ -19,7 +19,9 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
+
     private final UserService userService;
+
     @Override
     public ItemDto addItem(Item item, long userId) {
         if (userService.getUserById(userId) == null) {
