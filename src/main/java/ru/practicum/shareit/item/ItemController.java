@@ -9,7 +9,6 @@ import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * TODO Sprint add-controllers.
