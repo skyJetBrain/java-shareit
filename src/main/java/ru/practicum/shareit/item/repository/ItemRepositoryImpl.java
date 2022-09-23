@@ -5,11 +5,12 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Repository
 public class ItemRepositoryImpl implements ItemRepository {
-    private final HashMap<Long, Item> items = new HashMap<>();
+    private final ConcurrentHashMap<Long, Item> items = new ConcurrentHashMap<>();
     private final HashMap<Long, Set<Long>> userItems = new HashMap<>();
 
     private long startId;

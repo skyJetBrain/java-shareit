@@ -2,12 +2,14 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.service.UserService;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +45,10 @@ public class ItemServiceImpl implements ItemService {
         if (userService.getUserById(userId) == null) {
             throw new EntityNotFoundException("Пользователь не найден");
         }
-        if (updatedItem.getName() != null) {
+        if (StringUtils.hasText(updatedItem.getName())) {
             item.setName(updatedItem.getName());
         }
-        if (updatedItem.getDescription() != null) {
+        if (StringUtils.hasText(updatedItem.getDescription())) {
             item.setDescription(updatedItem.getDescription());
         }
         if (updatedItem.getAvailable() != null) {
@@ -63,7 +65,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchItem(String text) {
-        if (text.isEmpty()) {
+        if (!StringUtils.hasText(text)) {
             return new ArrayList<>();
         }
         Stream<Item> findByName = itemRepository.findAll().stream()
