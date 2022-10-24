@@ -17,22 +17,22 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-@Transactional
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemService itemService;
     private final UserService userService;
 
     @Override
+    @Transactional
     public BookingReturnDto addBooking(BookingDto bookingDto, Long userId) {
         validateBookingTime(bookingDto);
         Item item = itemService.getItemById(bookingDto.getItemId());
@@ -52,12 +52,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingReturnDto patchBooking(Long bookingId, Long userId, boolean approved) {
-        Optional<Booking> optionalBooking = bookingRepository.findById(bookingId);
-        if (optionalBooking.isEmpty()) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> {
             throw new EntityNotFoundException("Бронирование не найдено");
-        }
-        Booking booking = optionalBooking.get();
+        });
+
         if (approved) {
             if (!booking.getItem().getUserId().equals(userId)) {
                 throw new EntityNotFoundException("статус бронирования может менять только владелец вещи");
@@ -75,16 +75,14 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingReturnDto getBooking(Long bookingId, Long userId) {
-        Optional<Booking> optionalBooking = bookingRepository.findById(bookingId);
-        if (optionalBooking.isEmpty()) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> {
             throw new EntityNotFoundException("Бронирование не найдено");
-        }
-        Booking booking = optionalBooking.get();
+        });
 
         if (!booking.getItem().getUserId().equals(userId) && !booking.getBooker().getId().equals(userId)) {
             throw new EntityNotFoundException("Пользователь не является владельцем вещи или автором бронирования");
         }
-        return BookingMapper.toBookingReturnDto(optionalBooking.get());
+        return BookingMapper.toBookingReturnDto(booking);
     }
 
     @Override

@@ -8,30 +8,32 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
+    @Transactional
     @Override
     public UserDto addUser(UserDto userDto) {
         User user = UserMapper.toUser(userDto);
         return UserMapper.toUserDto(userRepository.save(user));
     }
 
+    @Transactional
     @Override
     public UserDto updateUser(long userId, User updatedUser) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+        User user = userRepository.findById(userId).orElseThrow(() -> {
             throw new EntityNotFoundException("Пользователь не найден");
-        }
-        User user = userOptional.get();
+        });
+
         if (updatedUser.getName() != null) {
             user.setName(updatedUser.getName());
         }
@@ -43,11 +45,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(long userId) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
+        User user = userRepository.findById(userId).orElseThrow(() -> {
             throw new EntityNotFoundException("Пользователь не найден");
-        }
-        return UserMapper.toUserDto(userOptional.get());
+        });
+        return UserMapper.toUserDto(user);
     }
 
     @Override
@@ -55,20 +56,20 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream().map(UserMapper::toUserDto).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public void deleteUser(long userId) {
-        if (userRepository.findById(userId).isEmpty()) {
+        userRepository.findById(userId).orElseThrow(() -> {
             throw new EntityNotFoundException("Пользователь не найден");
-        }
+        });
         userRepository.deleteById(userId);
     }
 
     public Set<Item> getUserItems(long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
+        User user = userRepository.findById(userId).orElseThrow(() -> {
             throw new EntityNotFoundException("Пользователь не найден");
-        }
-        return optionalUser.get().getUserItems();
+        });
+        return user.getUserItems();
     }
 
 
