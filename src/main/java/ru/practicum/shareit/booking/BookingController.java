@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingReturnDto;
+import org.springframework.validation.annotation.Validated;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.List;
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class BookingController {
     private final BookingService bookingService;
 
@@ -35,23 +39,31 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingId}")
-    public BookingReturnDto getBooking(@RequestHeader("X-Sharer-User-Id") Long userID, @PathVariable Long bookingId) {
-        log.info("Get-запрос на получение бронирования. id бронирования {}, id ползователя {}", bookingId, userID);
-        return bookingService.getBooking(bookingId, userID);
+    public BookingReturnDto getBooking(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long bookingId) {
+        log.info("Get-запрос на получение бронирования. id бронирования {}, id ползователя {}", bookingId, userId);
+        return bookingService.getBooking(bookingId, userId);
     }
 
     @GetMapping
-    public List<BookingReturnDto> getUserBookings(@RequestHeader("X-Sharer-User-Id") Long userID,
-                                                  @RequestParam(required = false, defaultValue = "ALL") String state) {
-        log.info("Get-запрос на получение чпичка бронирований пользователя с id {} и статусом {}", userID, state);
-        return bookingService.getUserBookingList(userID, state);
+    public List<BookingReturnDto> getUserBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                                  @RequestParam(required = false, defaultValue = "ALL") String state,
+                                                  @PositiveOrZero @RequestParam(name = "from", defaultValue = "0")
+                                                      Integer from,
+                                                  @Positive @RequestParam(name = "size", defaultValue = "10")
+                                                      Integer size) {
+        log.info("Get-запрос на получение списка бронирований пользователя с id {} и статусом {}", userId, state);
+        return bookingService.getUserBookingList(userId, state, from, size);
     }
 
     @GetMapping("/owner")
-    public List<BookingReturnDto> getOwnerBookings(@RequestHeader("X-Sharer-User-Id") Long userID,
-                                                   @RequestParam(required = false, defaultValue = "ALL") String state) {
-        log.info("Get-запрос на получение чпичка бронирований пользователя с id {} и статусом {}", userID, state);
-        return bookingService.getOwnerBookingList(userID, state);
+    public List<BookingReturnDto> getOwnerBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                                   @RequestParam(required = false, defaultValue = "ALL") String state,
+                                                   @PositiveOrZero @RequestParam(name = "from", defaultValue = "0")
+                                                       Integer from,
+                                                   @Positive @RequestParam(name = "size", defaultValue = "10")
+                                                       Integer size) {
+        log.info("Get-запрос на получение списка бронирований пользователя с id {} и статусом {}", userId, state);
+        return bookingService.getOwnerBookingList(userId, state, from, size);
     }
 
 }

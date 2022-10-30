@@ -16,6 +16,8 @@ import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
+import org.springframework.data.domain.Pageable;
+import ru.practicum.shareit.FromSizeRequest;
 
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -86,34 +88,35 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingReturnDto> getUserBookingList(Long userId, String state) {
+    public List<BookingReturnDto> getUserBookingList(Long userId, String state, Integer from, Integer size) {
         userService.getUserById(userId);
+        Pageable pageable = FromSizeRequest.of(from, size);
         switch (state) {
             case "FUTURE":
-                return bookingRepository.findFutureBookingsByBooker(userId, LocalDateTime.now())
+                return bookingRepository.findFutureBookingsByBooker(userId, LocalDateTime.now(), pageable)
                         .stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "ALL":
-                return bookingRepository.findBookingsByBooker(userId).stream()
+                return bookingRepository.findBookingsByBooker(userId, pageable).stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "WAITING":
                 return bookingRepository
-                        .findBookingsByBookerAndStatus(userId, BookingStatus.WAITING).stream()
+                        .findBookingsByBookerAndStatus(userId, BookingStatus.WAITING, pageable).stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "REJECTED":
                 return bookingRepository
-                        .findBookingsByBookerAndStatus(userId, BookingStatus.REJECTED).stream()
+                        .findBookingsByBookerAndStatus(userId, BookingStatus.REJECTED, pageable).stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "CURRENT":
-                return bookingRepository.findCurrentBookingForUser(userId, LocalDateTime.now()).stream()
+                return bookingRepository.findCurrentBookingForUser(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "PAST":
-                return bookingRepository.findPastBookingForUser(userId, LocalDateTime.now()).stream()
+                return bookingRepository.findPastBookingForUser(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             default:
@@ -122,40 +125,41 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingReturnDto> getOwnerBookingList(Long userId, String state) {
+    public List<BookingReturnDto> getOwnerBookingList(Long userId, String state, Integer from, Integer size) {
         userService.getUserById(userId);
-        Stream<Long> itemsId = itemService.getItems(userId).stream().map(ItemDto::getId);
+        Pageable pageable = FromSizeRequest.of(from, size);
+        Stream<Long> itemsId = itemService.getItems(userId, 0, Integer.MAX_VALUE).stream().map(ItemDto::getId);
         switch (state) {
             case "FUTURE":
                 return itemsId.flatMap((id) ->
                                 bookingRepository.findFutureBookingsByItem(
-                                        id, LocalDateTime.now()).stream())
+                                        id, LocalDateTime.now(), pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .sorted((t1, t2) -> -t1.getStart().compareTo(t2.getStart()))
                         .collect(Collectors.toList());
 
             case "ALL":
-                return itemsId.flatMap((id) -> bookingRepository.findBookingsByItem(id).stream())
+                return itemsId.flatMap((id) -> bookingRepository.findBookingsByItem(id, pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "WAITING":
                 return itemsId.flatMap((id) -> bookingRepository
-                                .findBookingsByItemAndStatus(id, BookingStatus.WAITING).stream())
+                                .findBookingsByItemAndStatus(id, BookingStatus.WAITING, pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "REJECTED":
                 return itemsId.flatMap((id) -> bookingRepository
-                                .findBookingsByItemAndStatus(id, BookingStatus.REJECTED).stream())
+                                .findBookingsByItemAndStatus(id, BookingStatus.REJECTED, pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "CURRENT":
                 return itemsId.flatMap((id) -> bookingRepository
-                                .findCurrentBookingForOwner(id, LocalDateTime.now()).stream())
+                                .findCurrentBookingForOwner(id, LocalDateTime.now(), pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             case "PAST":
                 return itemsId.flatMap((id) -> bookingRepository
-                                .findPastBookingForOwner(id, LocalDateTime.now()).stream())
+                                .findPastBookingForOwner(id, LocalDateTime.now(), pageable).stream())
                         .map(BookingMapper::toBookingReturnDto)
                         .collect(Collectors.toList());
             default:

@@ -10,7 +10,7 @@ import java.util.Set;
 public interface UserService {
     UserDto addUser(UserDto userDto);
 
-    UserDto updateUser(long userId, User updatedUser);
+    UserDto updateUser(long userId, UserDto updatedUserDto);
 
     UserDto getUserById(long userId);
 
